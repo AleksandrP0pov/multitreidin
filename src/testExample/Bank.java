@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Bank {
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args)  {
         System.out.println(Transfer.list);
         System.out.println("----------------------------------------------");
         ExecutorService executorService = Executors.newFixedThreadPool(10);
@@ -19,7 +19,11 @@ public class Bank {
             executorService.execute(new Transfer());
         }
         executorService.shutdown();
-        executorService.awaitTermination(5, TimeUnit.SECONDS);
+        try {
+            executorService.awaitTermination(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         System.out.println(Transfer.list);
         System.out.println("ends Main");
 
@@ -35,7 +39,7 @@ class Transfer implements Runnable{
         Random random = new Random();
         int randomIndex1 = random.nextInt(list.size());
         int randomIndex2 = random.nextInt(list.size());
-        int randomMoney = random.nextInt(100000);
+        int randomCash = random.nextInt(100000);
 
         BankAccount accountFrom = list.get(randomIndex1);
         BankAccount accountTo = list.get(randomIndex2);
@@ -45,13 +49,13 @@ class Transfer implements Runnable{
         if (fromId < toId) {
             synchronized (accountFrom) {
                 synchronized (accountTo) {
-                    moneyTransfer(accountFrom, accountTo, randomMoney);
+                    moneyTransfer(accountFrom, accountTo, randomCash);
                 }
             }
         } else {
             synchronized (accountTo) {
                 synchronized (accountFrom) {
-                    moneyTransfer(accountFrom, accountTo, randomMoney);
+                    moneyTransfer(accountFrom, accountTo, randomCash);
                 }
             }
         }
@@ -70,16 +74,16 @@ class Transfer implements Runnable{
         return list;
     }
 
-    public void moneyTransfer(BankAccount accountFrom, BankAccount accountTo, Integer money) {
-        System.out.println(Thread.currentThread().getName() + " Попытка перевода с " + accountFrom + " на " + accountTo + " д/с в размере " + money);
+    public void moneyTransfer(BankAccount accountFrom, BankAccount accountTo, Integer cash) {
+        System.out.println(Thread.currentThread().getName() + " Попытка перевода с " + accountFrom + " на " + accountTo + " д/с в размере " + cash);
         if (accountFrom.equals(accountTo)) {
             System.out.println("Ошибочная операция, измените номер счета");
         } else {
-            if (money > accountFrom.getCash()) {
+            if (cash > accountFrom.getCash()) {
                 System.out.println("Не достаточно средств для перевода");
             } else {
-                accountFrom.setCash(accountFrom.getCash() - money);
-                accountTo.setCash(accountTo.getCash() + money);
+                accountFrom.setCash(accountFrom.getCash() - cash);
+                accountTo.setCash(accountTo.getCash() + cash);
                 System.out.println(Thread.currentThread().getName() + " Транзакция произведена успешно, на счете №" + accountTo.getAccountNumber()
                         + ": " + accountTo.getCash() + " рублей");
 
